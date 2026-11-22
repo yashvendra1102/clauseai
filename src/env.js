@@ -37,6 +37,19 @@ const num = (value, fallback, min = 0, max = Infinity) => {
   return Number.isFinite(n) && n >= min && n <= max ? n : fallback;
 };
 
+function resolvePublicDir() {
+  if (process.env.PUBLIC_DIR) return path.resolve(process.cwd(), process.env.PUBLIC_DIR);
+  const candidates = [
+    path.resolve(process.cwd(), 'public'),
+    path.resolve(process.cwd(), '../frontend'),
+    path.resolve(process.cwd(), 'frontend'),
+  ];
+  for (const dir of candidates) {
+    if (fs.existsSync(dir)) return dir;
+  }
+  return path.resolve(process.cwd(), 'public');
+}
+
 export const config = {
   host: process.env.HOST || '0.0.0.0',
   port: num(process.env.PORT, 3000, 1, 65535),
@@ -57,5 +70,6 @@ export const config = {
   openaiModel: process.env.OPENAI_MODEL || 'gpt-4o-mini',
   openaiTimeoutMs: num(process.env.OPENAI_TIMEOUT_MS, 30000, 1000, 120000),
 
-  publicDir: path.resolve(process.cwd(), process.env.PUBLIC_DIR || 'public'),
+  publicDir: resolvePublicDir(),
 };
+

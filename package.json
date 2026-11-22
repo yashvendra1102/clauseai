@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "npm run dev --prefix backend",
     "build": "echo 'Build ok'",
     "test": "npm test --prefix backend",
     "start": "npm start --prefix backend"
