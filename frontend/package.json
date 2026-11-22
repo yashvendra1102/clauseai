@@ -4,6 +4,7 @@
   "private": true,
   "description": "Frontend UI for Clause Guard AI contract-review dashboard",
   "scripts": {
+    "build": "echo 'Build ok'",
     "start": "npx serve ."
   }
 }
