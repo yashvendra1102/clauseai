@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Clause Guard AI — AI contract review. Flags hidden risks and links each one to the exact clause. Not legal advice.">
+<title>Clause Guard AI — Contract review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+/* ============ RESET & TOKENS ============ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --blue:#0B63E5; --blue-2:#1A75FF; --navy:#1B1B3A; --gray:#8A94A6;
+  --bg:#F4F7FC; --card:#fff; --orange:#F58B2A; --sky:#3B9CF5; --slate:#5B7690;
+  --teal:#4DC9A8; --purple:#8A4F9E; --pink:#E8456B; --hl:#FFE27A;
+  --line:#EDF1F7; --shadow-card:0 4px 20px rgba(20,40,90,.06);
+}
+html{overflow-x:hidden}
+body{
+  font-family:'Plus Jakarta Sans',Poppins,system-ui,-apple-system,sans-serif;
+  background:#E9EEF7; color:var(--navy); min-height:100vh; min-height:100dvh;
+  display:flex; align-items:center; justify-content:center; padding:28px;
+  overflow-x:hidden; -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:radial-gradient(640px 520px at 6% -8%, rgba(11,99,229,.34), rgba(11,99,229,0) 62%);
+}
+::selection{background:rgba(11,99,229,.16)}
+button{font-family:inherit; cursor:pointer; background:none; border:none; color:inherit}
+a{color:var(--blue)}
+:focus-visible{outline:2.5px solid var(--blue); outline-offset:2px; border-radius:6px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* ============ APP WINDOW ============ */
+.app{
+  position:relative; z-index:1; width:min(1200px,100%);
+  height:calc(100vh - 56px); height:calc(100dvh - 56px); min-height:600px;
+  background:var(--card); border-radius:16px; overflow:hidden;
+  box-shadow:0 20px 60px rgba(20,40,90,.15);
+  display:grid; grid-template-columns:190px minmax(0,1fr);
+}
+
+/* ============ SIDEBAR ============ */
+.sidebar{
+  background:#fff; border-right:1px solid var(--line);
+  padding:26px 20px 30px; display:flex; flex-direction:column; min-height:0;
+}
+.brand{display:flex; gap:10px; align-items:center; text-align:left; padding:2px; border-radius:8px}
+.brand-mark{
+  width:32px; height:32px; flex:0 0 auto; border-radius:9px; color:#fff;
+  background:linear-gradient(135deg,var(--blue),var(--blue-2));
+  display:grid; place-items:center; box-shadow:0 6px 14px rgba(11,99,229,.32);
+}
+.brand-mark svg{width:17px;height:17px}
+.brand-name{font-size:17px; font-weight:800; letter-spacing:-.02em; color:var(--navy); line-height:1.15}
+.brand-cap{display:block; margin-top:3px; font-size:8px; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--gray)}
+.nav{margin-top:38px; display:flex; flex-direction:column; gap:22px}
+.nav-item{
+  display:flex; align-items:center; gap:12px; text-align:left; width:100%;
+  border-radius:10px; padding:2px; transition:.2s ease;
+}
+.nav-ico{
+  width:32px; height:32px; flex:0 0 auto; border-radius:50%;
+  background:#F1F4F9; color:#93A0B4; display:grid; place-items:center;
+  transition:.2s ease;
+}
+.nav-ico svg{width:15px;height:15px}
+.nav-item .label{font-size:12px; font-weight:600; color:var(--gray); transition:.2s ease}
+.nav-item:hover .nav-ico{background:#E4EBF6; color:var(--navy)}
+.nav-item:hover .label{color:var(--navy)}
+.nav-item.active .nav-ico{background:var(--blue); color:#fff; box-shadow:0 6px 14px rgba(11,99,229,.35)}
+.nav-item.active .label{color:var(--navy); font-weight:700}
+.badge{
+  margin-left:auto; background:#EDF1F7; color:var(--gray);
+  font-size:9px; font-weight:800; padding:2px 7px; border-radius:99px; min-width:18px; text-align:center;
+}
+.dots{
+  margin-top:auto; width:110px; height:110px; opacity:.4;
+  background-image:radial-gradient(circle,#A9B8D2 1.2px,transparent 1.4px);
+  background-size:7px 7px;
+}
+
+/* ============ MAIN COLUMN ============ */
+.main-col{display:flex; flex-direction:column; min-width:0; min-height:0}
+.topbar{
+  height:56px; flex:0 0 auto; background:#fff; border-bottom:1px solid var(--line);
+  display:flex; align-items:center; justify-content:space-between; padding:0 26px;
+}
+.icon-btn{
+  width:34px; height:34px; border-radius:50%; display:grid; place-items:center;
+  color:#7C8798; transition:.2s ease;
+}
+.icon-btn:hover{background:#F1F4F9; color:var(--navy)}
+.icon-btn svg{width:17px;height:17px}
+.top-right{display:flex; align-items:center; gap:10px}
+.bell-wrap{position:relative}
+.bell-dot{position:absolute; top:7px; right:8px; width:7px; height:7px; border-radius:50%; background:#9AA5B5; border:2px solid #fff}
+.avatar{
+  width:26px; height:26px; border-radius:50%; border:1.6px solid #B9C4D4;
+  display:grid; place-items:center; color:#8A94A6; transition:.2s ease;
+}
+.avatar:hover{border-color:var(--blue); color:var(--blue)}
+.avatar svg{width:13px;height:13px}
+.scroller{flex:1; overflow-y:auto; overflow-x:hidden; min-height:0; scrollbar-width:thin; scrollbar-color:#C6D1E2 transparent}
+.scroller::-webkit-scrollbar{width:8px}
+.scroller::-webkit-scrollbar-thumb{background:#C6D1E2; border-radius:8px}
+.content{padding:40px 48px 56px; min-width:0}
+
+/* ============ DASHBOARD HEADER ============ */
+.page-head h1{font-size:28px; font-weight:800; letter-spacing:-.02em}
+.page-head .sub{margin-top:8px; font-size:12px; color:var(--gray)}
+.link{color:var(--blue); font-weight:700; font-size:12px; text-decoration:underline; text-underline-offset:2px; transition:.2s ease}
+.link:hover{color:#084BB0}
+
+/* ============ HERO ============ */
+.hero{display:grid; grid-template-columns:2fr 1fr; gap:32px; margin-top:24px}
+.banner{
+  position:relative; display:block; width:100%; height:280px; overflow:hidden;
+  border-radius:6px; text-align:left; padding:40px; color:#fff;
+  background:linear-gradient(135deg,var(--blue) 0%,var(--blue-2) 100%);
+  transition:transform .2s ease, box-shadow .2s ease;
+}
+.banner:hover{transform:translateY(-2px); box-shadow:0 18px 44px rgba(11,99,229,.38)}
+.banner .circle{position:absolute; border-radius:50%; background:rgba(0,0,0,.08); pointer-events:none}
+.banner .c1{width:360px; height:360px; right:-110px; top:-150px}
+.banner .c2{width:230px; height:230px; right:130px; bottom:-130px}
+.banner-kicker{font-size:10px; font-weight:800; letter-spacing:.18em; text-transform:uppercase; color:rgba(255,255,255,.65); position:relative}
+.banner-h2{display:block; font-size:26px; font-weight:800; letter-spacing:-.01em; margin-top:10px; position:relative}
+.banner .lede{font-size:12px; line-height:1.75; color:rgba(255,255,255,.82); margin-top:12px; max-width:300px; position:relative}
+.banner-cta{
+  position:relative; margin-top:20px; display:inline-flex; align-items:center; gap:8px;
+  font-size:11px; font-weight:700; color:#fff; background:rgba(255,255,255,.16);
+  border:1px solid rgba(255,255,255,.25); padding:9px 15px; border-radius:99px;
+  transition:.2s ease; backdrop-filter:blur(2px);
+}
+.banner:hover .banner-cta{background:rgba(255,255,255,.26)}
+.banner-cta svg{width:13px;height:13px}
+.banner-art{position:absolute; top:0; right:0; width:47%; height:100%; pointer-events:none; transition:transform .35s ease}
+.banner:hover .banner-art{transform:translateY(-3px)}
+.banner-art svg{width:100%; height:100%}
+.float{animation:floaty 6s ease-in-out infinite}
+@keyframes floaty{50%{transform:translateY(-8px)}}
+
+.do-card h3{font-size:15px; font-weight:800; letter-spacing:-.01em}
+.do-list{margin-top:18px; display:flex; flex-direction:column; gap:16px}
+.do-item{display:flex; gap:12px; align-items:flex-start}
+.do-ico{width:24px; height:24px; flex:0 0 auto}
+.do-ico svg{width:24px; height:24px}
+.do-item h4{font-size:12px; font-weight:700}
+.do-item p{font-size:10px; color:var(--gray); margin-top:3px; line-height:1.55}
+.btn-primary{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  background:var(--blue); color:#fff; font-size:13px; font-weight:600;
+  padding:12px 18px; border-radius:4px; transition:.2s ease;
+  box-shadow:0 8px 18px rgba(11,99,229,.28);
+}
+.btn-primary:hover{background:#084FBB; transform:translateY(-1px)}
+.btn-primary:active{transform:translateY(0)}
+.btn-primary:disabled{opacity:.6; cursor:not-allowed; transform:none}
+.btn-block{width:100%; margin-top:22px}
+.btn-ghost{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  background:#EEF3FA; color:var(--navy); font-size:13px; font-weight:600;
+  padding:12px 18px; border-radius:4px; transition:.2s ease;
+}
+.btn-ghost:hover{background:#E2EAF6}
+.spinner{width:14px; height:14px; border-radius:50%; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ============ REVIEWED CONTRACTS ============ */
+.section-title{font-size:22px; font-weight:800; letter-spacing:-.01em; margin-top:48px}
+.section-sub{font-size:12px; color:var(--gray); margin-top:6px}
+.cards{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px; margin-top:20px}
+.doc-card{
+  background:#fff; border-radius:6px; padding:24px 22px;
+  box-shadow:var(--shadow-card); text-align:left; width:100%;
+  display:flex; flex-direction:column; align-items:stretch;
+  transition:transform .25s ease, box-shadow .25s ease;
+  animation:rise .5s ease both;
+}
+.doc-card:hover{transform:translateY(-4px); box-shadow:0 18px 40px rgba(20,40,90,.14)}
+@keyframes rise{from{opacity:0; transform:translateY(10px)}}
+.doc-ico{
+  width:44px; height:44px; border-radius:50%; margin:4px auto 14px;
+  display:grid; place-items:center; color:#fff; transition:transform .25s ease;
+}
+.doc-card:hover .doc-ico{transform:scale(1.08)}
+.doc-ico svg{width:20px; height:20px}
+.doc-card .t{font-size:16px; font-weight:800; letter-spacing:-.01em; display:block}
+.doc-card .sum{font-size:12px; color:var(--gray); line-height:1.7; margin-top:8px; display:block}
+.doc-foot{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:20px}
+.status{font-size:10px; font-weight:800; letter-spacing:.03em; display:inline-flex; align-items:center; gap:6px}
+.status .dot{width:6px; height:6px; border-radius:50%; flex:0 0 auto}
+.date{font-size:10px; color:var(--gray); white-space:nowrap}
+
+/* ============ OVERLAYS / DIALOGS ============ */
+.overlay{
+  position:fixed; inset:0; z-index:60; display:grid; place-items:center; padding:22px;
+  background:rgba(16,24,46,.46); backdrop-filter:blur(4px);
+  visibility:hidden; opacity:0; transition:opacity .2s ease, visibility .2s ease;
+}
+.overlay.open{visibility:visible; opacity:1}
+.dialog{
+  background:#fff; border-radius:14px; width:min(660px,100%); max-height:88vh; max-height:88dvh;
+  overflow-y:auto; padding:28px 30px; box-shadow:0 30px 80px rgba(10,25,70,.35);
+  transform:translateY(12px) scale(.98); transition:transform .2s ease;
+  scrollbar-width:thin;
+}
+.overlay.open .dialog{transform:none}
+.dlg-head{display:flex; align-items:flex-start; justify-content:space-between; gap:16px}
+.dlg-head h2{font-size:20px; font-weight:800; letter-spacing:-.01em}
+.dlg-sub{font-size:12px; color:var(--gray); margin-top:6px; line-height:1.6}
+.fld-label{display:block; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--navy); margin:20px 0 8px}
+textarea{
+  width:100%; min-height:150px; resize:vertical; border:1.5px solid #E2E8F2; border-radius:8px;
+  padding:13px 14px; font-family:inherit; font-size:12.5px; line-height:1.7; color:var(--navy);
+  background:#FBFCFE; transition:border-color .2s ease, box-shadow .2s ease;
+}
+textarea:focus{outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(11,99,229,.14); background:#fff}
+textarea::placeholder{color:#A6B0C2}
+.policy textarea{min-height:120px}
+.counter-row{display:flex; justify-content:space-between; align-items:center; margin-top:8px}
+.counter{font-size:10.5px; color:var(--gray); font-weight:600}
+.counter.over{color:var(--pink); font-weight:800}
+.mini-link{font-size:10.5px; color:var(--gray); text-decoration:underline; text-underline-offset:2px}
+.mini-link:hover{color:var(--navy)}
+.dropzone{
+  margin-top:16px; display:flex; align-items:center; gap:12px; cursor:pointer;
+  border:1.5px dashed #C7D3E6; border-radius:8px; padding:14px 16px;
+  background:#F8FAFE; transition:.2s ease;
+}
+.dropzone:hover{border-color:var(--blue); background:#F1F6FE}
+.dropzone svg{width:18px; height:18px; color:var(--blue); flex:0 0 auto}
+.dropzone .dz-t{font-size:12px; font-weight:700; color:var(--navy)}
+.dropzone .dz-s{font-size:10px; color:var(--gray); margin-top:2px}
+details.policy{margin-top:16px; border:1.5px solid #E6ECF5; border-radius:8px; background:#FBFCFE}
+details.policy summary{
+  list-style:none; cursor:pointer; padding:13px 16px; font-size:12px; font-weight:700;
+  display:flex; align-items:center; gap:10px; border-radius:8px; transition:.2s ease; color:var(--navy);
+}
+details.policy summary::-webkit-details-marker{display:none}
+details.policy summary svg{width:15px; height:15px; color:var(--slate); transition:transform .2s ease}
+details.policy[open] summary svg{transform:rotate(180deg)}
+details.policy summary:hover{background:#F1F5FB}
+details.policy .policy-body{padding:0 16px 16px}
+.actions{display:flex; gap:12px; margin-top:20px; flex-wrap:wrap}
+.actions .btn-primary{flex:1; min-width:180px}
+.status-line{margin-top:14px; font-size:12px; line-height:1.6; min-height:18px}
+.status-line.error{color:#C93358}
+.status-line.ok{color:#14856A}
+.status-line.info{color:var(--slate)}
+.help-steps{margin-top:18px; display:flex; flex-direction:column; gap:14px}
+.help-step{display:flex; gap:12px; align-items:flex-start}
+.help-num{
+  width:24px; height:24px; flex:0 0 auto; border-radius:50%; background:#EEF3FB;
+  color:var(--blue); font-size:11px; font-weight:800; display:grid; place-items:center;
+}
+.help-step h4{font-size:12.5px; font-weight:800}
+.help-step p{font-size:11.5px; color:var(--gray); line-height:1.6; margin-top:3px}
+.disclaimer-box{
+  margin-top:20px; display:flex; gap:10px; align-items:flex-start;
+  background:#FFF7EC; border:1px solid #F6DFC0; border-radius:8px; padding:12px 14px;
+  font-size:11.5px; line-height:1.6; color:#8A5A1E;
+}
+.disclaimer-box svg{width:15px; height:15px; flex:0 0 auto; margin-top:1px}
+
+/* ============ WORKSPACE ============ */
+.ws-head{display:flex; align-items:center; gap:16px; flex-wrap:wrap}
+.btn-back{display:inline-flex; align-items:center; gap:8px; font-size:12px; font-weight:700; color:var(--slate); padding:9px 14px; border-radius:99px; background:#EAF0F8; transition:.2s ease}
+.btn-back:hover{background:#DDE7F4; color:var(--navy)}
+.btn-back svg{width:14px; height:14px}
+.ws-title{font-size:20px; font-weight:800; letter-spacing:-.01em; min-width:0; overflow-wrap:anywhere}
+.toggle{margin-left:auto; display:flex; background:#E8EEF7; border-radius:99px; padding:3px}
+.toggle button{
+  padding:7px 16px; border-radius:99px; font-size:11px; font-weight:700; color:var(--gray);
+  transition:.2s ease; display:inline-flex; align-items:center; gap:6px;
+}
+.toggle button.on{background:#fff; color:var(--navy); box-shadow:0 2px 8px rgba(20,40,90,.12)}
+.ws-meta{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:16px}
+.pill{
+  display:inline-flex; align-items:center; gap:5px; font-size:9px; font-weight:800;
+  letter-spacing:.08em; text-transform:uppercase; padding:4px 10px; border-radius:99px;
+}
+.pill .cdot{width:6px; height:6px; border-radius:50%; background:currentColor}
+.p-high{background:rgba(232,69,107,.12); color:var(--pink)}
+.p-medium{background:rgba(245,139,42,.15); color:#D2700F}
+.p-ok{background:rgba(77,201,168,.16); color:#148A68}
+.ws-hint{margin-left:auto; font-size:10.5px; color:var(--gray)}
+.split{display:grid; grid-template-columns:1.12fr minmax(0,1fr); gap:24px; margin-top:18px; align-items:start}
+.pane-col{min-width:0}
+.pane-label{font-size:10px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--gray); margin-bottom:10px; display:flex; align-items:center; gap:8px}
+.pane-label svg{width:13px; height:13px}
+.pane-doc{
+  background:#fff; border-radius:10px; padding:30px 32px; box-shadow:var(--shadow-card);
+  font-family:'Newsreader',Georgia,serif; font-size:14px; line-height:1.85; color:#33334F;
+  white-space:pre-wrap; overflow-wrap:anywhere; max-height:72vh; overflow-y:auto; scrollbar-width:thin;
+}
+.pane-doc::-webkit-scrollbar{width:8px}
+.pane-doc::-webkit-scrollbar-thumb{background:#D6DEEC; border-radius:8px}
+mark{
+  border-radius:3px; padding:1px 3px; cursor:pointer; color:inherit;
+  transition:background .2s ease, box-shadow .2s ease;
+}
+mark.lv-high{background:rgba(232,69,107,.15); box-shadow:inset 0 -2px 0 rgba(232,69,107,.5)}
+mark.lv-medium{background:rgba(245,139,42,.17); box-shadow:inset 0 -2px 0 rgba(245,139,42,.55)}
+mark.lv-ok{background:rgba(77,201,168,.16); box-shadow:inset 0 -2px 0 rgba(77,201,168,.5)}
+mark:hover{filter:saturate(1.2)}
+mark.active{background:var(--hl) !important; box-shadow:0 0 0 3px rgba(255,226,122,.5), inset 0 -2px 0 #E7B93B !important}
+.plain-note{display:none}
+.pane-doc.plain .plain-note{
+  display:block; font-family:'Plus Jakarta Sans',sans-serif; font-size:11px; line-height:1.65;
+  color:#0E6B50; background:rgba(77,201,168,.13); border-left:3px solid var(--teal);
+  border-radius:0 8px 8px 0; padding:9px 13px; margin:10px 0 6px; white-space:normal;
+}
+.pane-risks{display:flex; flex-direction:column; gap:12px; max-height:72vh; overflow-y:auto; padding:2px 4px 20px 2px; scrollbar-width:thin}
+.pane-risks::-webkit-scrollbar{width:8px}
+.pane-risks::-webkit-scrollbar-thumb{background:#D6DEEC; border-radius:8px}
+.risk-card{
+  --lv:var(--slate);
+  display:block; width:100%; text-align:left; background:#fff; border-radius:10px;
+  padding:16px 18px 15px; box-shadow:var(--shadow-card); border-left:4px solid var(--lv);
+  transition:transform .2s ease, box-shadow .2s ease;
+}
+.risk-card:hover{transform:translateY(-2px); box-shadow:0 12px 28px rgba(20,40,90,.12)}
+.risk-card.active{box-shadow:0 0 0 2px var(--blue), 0 12px 28px rgba(20,40,90,.14)}
+.risk-card.shake{animation:shake .35s ease}
+@keyframes shake{25%{transform:translateX(-4px)}50%{transform:translateX(4px)}75%{transform:translateX(-2px)}}
+.rc-top{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+.risk-sec{font-size:9.5px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--gray)}
+.rc-title{display:block; font-size:13px; font-weight:800; margin-top:9px; letter-spacing:-.01em}
+.risk-found{display:block; font-size:12px; color:#525D78; line-height:1.65; margin-top:7px}
+.risk-quote{
+  display:block; font-family:'Newsreader',Georgia,serif; font-style:italic; font-size:12px;
+  color:#49536E; background:#F5F8FC; border-radius:6px; padding:9px 11px; margin-top:10px; line-height:1.6;
+}
+.risk-rule{display:block; font-size:11px; color:var(--gray); line-height:1.6; margin-top:10px; padding-top:10px; border-top:1px dashed #E4EAF3}
+.risk-rule strong{color:var(--slate); font-weight:800}
+.tag-nl{
+  display:inline-flex; font-size:9px; font-weight:800; letter-spacing:.05em; text-transform:uppercase;
+  color:#A5660B; background:rgba(245,139,42,.15); padding:3px 8px; border-radius:99px;
+}
+
+/* ============ FOOTER DISCLAIMER ============ */
+.disclaimer-bar{
+  flex:0 0 auto; background:#fff; border-top:1px solid var(--line);
+  padding:11px 26px; display:flex; gap:9px; align-items:center;
+  font-size:10.5px; line-height:1.5; color:var(--gray);
+}
+.disclaimer-bar svg{width:14px; height:14px; flex:0 0 auto; color:#A5B0C2}
+.disclaimer-bar strong{color:var(--slate); font-weight:700}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width:900px){
+  .app{grid-template-columns:64px minmax(0,1fr)}
+  .sidebar{padding:22px 0; align-items:center}
+  .brand{padding:0}
+  .brand-text{display:none}
+  .nav{align-items:center; gap:18px; width:100%}
+  .nav-item{justify-content:center; width:auto}
+  .nav-item .label,.badge{display:none}
+  .dots{display:none}
+  .content{padding:32px 28px 48px}
+  .hero{grid-template-columns:1fr}
+  .banner{height:auto; min-height:250px}
+  .banner-art{width:42%}
+  .cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .split{grid-template-columns:1fr}
+  .pane-doc{max-height:60vh}
+  .pane-risks{max-height:none; overflow:visible; padding-right:0}
+}
+@media (max-width:600px){
+  body{padding:10px}
+  .app{display:flex; flex-direction:column; height:calc(100vh - 20px); height:calc(100dvh - 20px); border-radius:14px; min-height:480px}
+  .main-col{order:1; flex:1; min-height:0}
+  .sidebar{
+    order:2; flex-direction:row; align-items:center; justify-content:center;
+    padding:10px 14px; border-right:0; border-top:1px solid var(--line);
+  }
+  .brand,.dots{display:none}
+  .nav{margin-top:0; flex-direction:row; gap:4px; width:100%; justify-content:space-around; align-items:center}
+  .nav-item{padding:4px}
+  .nav-item .label,.badge{display:none}
+  .content{padding:24px 20px 40px}
+  .page-head h1{font-size:24px}
+  .banner{padding:28px 24px}
+  .banner-art{display:none}
+  .cards{grid-template-columns:1fr}
+  .toggle{margin-left:0; order:3}
+  .ws-hint{display:none}
+  .dialog{padding:22px 20px}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none !important; transition:none !important; scroll-behavior:auto !important}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="sidebar">
+    <button class="brand" id="brandHome" aria-label="Clause Guard AI — go to dashboard">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.5 9.6-8 11-4.5-1.4-8-6-8-11V5z"/><path d="M9 11.6l2.1 2.1 4-4.4"/></svg>
+      </span>
+      <span class="brand-text">
+        <span class="brand-name">Clause Guard AI</span>
+        <span class="brand-cap">Contract Review</span>
+      </span>
+    </button>
+
+    <nav class="nav" aria-label="Primary">
+      <button class="nav-item" data-nav="home">
+        <span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 20z"/><path d="M9 21v-7h6v7"/></svg></span>
+        <span class="label">Home</span>
+      </button>
+      <button class="nav-item" data-nav="policy">
+        <span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/></svg></span>
+        <span class="label">Policy Rules</span>
+      </button>
+      <button class="nav-item" data-nav="saved">
+        <span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-4.5L5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span>
+        <span class="label">Saved Reviews</span>
+        <span class="badge" id="savedBadge">3</span>
+      </button>
+      <button class="nav-item" data-nav="help">
+        <span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M9.2 9a2.9 2.9 0 0 1 5.6 1c0 1.9-2.8 2.4-2.8 3.8"/><path d="M12 17h.01"/></svg></span>
+        <span class="label">Help</span>
+      </button>
+      <button class="nav-item active" data-nav="review" aria-current="page">
+        <span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M13 2v7h7"/><circle cx="11" cy="14.5" r="2.1"/><path d="M12.6 16.1L14.5 18"/></svg></span>
+        <span class="label">Contract Review</span>
+      </button>
+    </nav>
+
+    <div class="dots" aria-hidden="true"></div>
+  </aside>
+
+  <!-- ================= MAIN COLUMN ================= -->
+  <div class="main-col">
+    <header class="topbar">
+      <button class="icon-btn" aria-label="Filters">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h13M21 18h-1"/><circle cx="15" cy="6" r="2" fill="#fff"/><circle cx="9" cy="12" r="2" fill="#fff"/><circle cx="19" cy="18" r="2" fill="#fff"/></svg>
+      </button>
+      <div class="top-right">
+        <span class="bell-wrap">
+          <button class="icon-btn" aria-label="Notifications">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8.5a6 6 0 1 0-12 0c0 6.5-2.5 8.5-2.5 8.5h17S18 15 18 8.5"/><path d="M13.7 20.5a2 2 0 0 1-3.4 0"/></svg>
+          </button>
+          <span class="bell-dot" aria-hidden="true"></span>
+        </span>
+        <button class="avatar" aria-label="Your profile">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 20c1.4-3.3 3.9-5 6.5-5s5.1 1.7 6.5 5"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="scroller" id="scroller">
+      <main class="content">
+
+        <!-- ========== DASHBOARD VIEW ========== -->
+        <div id="dashboard">
+          <div class="page-head">
+            <h1>Contract review</h1>
+            <p class="sub">Below are all the contracts you have reviewed. <button class="link" id="viewAllLink">View all reviews</button></p>
+          </div>
+
+          <div class="hero">
+            <button class="banner" id="bannerBtn" aria-label="Review a contract — open the review panel">
+              <span class="circle c1" aria-hidden="true"></span>
+              <span class="circle c2" aria-hidden="true"></span>
+              <span class="banner-kicker">Clause Guard AI</span>
+              <span class="banner-h2">Review a Contract</span>
+              <span class="lede" style="display:block">Paste the text or upload a PDF. Clause Guard AI flags the risks and links each one to the exact clause.</span>
+              <span class="banner-cta">Start a review
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </span>
+              <span class="banner-art" aria-hidden="true">
+                <svg viewBox="0 0 340 260" fill="none" preserveAspectRatio="xMidYMid meet">
+                  <ellipse cx="172" cy="234" rx="118" ry="15" fill="rgba(7,30,80,.16)"/>
+                  <g class="float">
+                    <g transform="translate(92,16) rotate(5)">
+                      <rect x="-18" y="14" width="172" height="200" rx="10" fill="rgba(255,255,255,.28)"/>
+                      <rect x="0" y="0" width="172" height="200" rx="10" fill="#FFFFFF"/>
+                      <rect x="20" y="22" width="62" height="9" rx="4.5" fill="#C9D6EC"/>
+                      <rect x="20" y="40" width="132" height="2.5" rx="1.25" fill="#E4EAF5"/>
+                      <rect x="20" y="56" width="132" height="6" rx="3" fill="#E4EAF5"/>
+                      <rect x="20" y="71" width="112" height="6" rx="3" fill="#E4EAF5"/>
+                      <rect x="20" y="86" width="132" height="6" rx="3" fill="rgba(232,69,107,.32)"/>
+                      <circle cx="160" cy="89" r="3.4" fill="#E8456B"/>
+                      <rect x="20" y="101" width="92" height="6" rx="3" fill="#E4EAF5"/>
+                      <rect x="20" y="116" width="132" height="6" rx="3" fill="#E4EAF5"/>
+                      <rect x="20" y="131" width="118" height="6" rx="3" fill="rgba(245,139,42,.34)"/>
+                      <circle cx="146" cy="134" r="3.4" fill="#F58B2A"/>
+                      <rect x="20" y="146" width="132" height="6" rx="3" fill="rgba(77,201,168,.3)"/>
+                      <rect x="20" y="161" width="76" height="6" rx="3" fill="#E4EAF5"/>
+                      <path d="M22 184c5-9 9 4 15-3s9 6 15-1 8 7 15 0" stroke="#3D4B73" stroke-width="2" stroke-linecap="round" opacity=".5"/>
+                      <rect x="20" y="192" width="50" height="2" rx="1" fill="#D8E0F0"/>
+                      <rect x="108" y="178" width="44" height="16" rx="8" fill="rgba(11,99,229,.14)"/>
+                      <path d="M119 186.2l3 3 6-6.4" stroke="#0B63E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </g>
+                    <circle cx="66" cy="58" r="21" fill="#FFFFFF"/>
+                    <path d="M57.5 58.5l6 6 11-12" stroke="#0B63E5" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+                  </g>
+                  <rect x="34" y="228" width="236" height="3" rx="1.5" fill="rgba(255,255,255,.55)"/>
+                  <path d="M282 40v14M275 47h14" stroke="rgba(255,255,255,.6)" stroke-width="2.4" stroke-linecap="round"/>
+                  <path d="M306 118v10M301 123h10" stroke="rgba(255,255,255,.45)" stroke-width="2.2" stroke-linecap="round"/>
+                </svg>
+              </span>
+            </button>
+
+            <div class="do-card">
+              <h3>Things you can do with Clause Guard AI</h3>
+              <div class="do-list">
+                <div class="do-item">
+                  <span class="do-ico" style="color:var(--blue-2)" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9.5 13.5l1.8 1.8 3.4-3.8"/></svg>
+                  </span>
+                  <div><h4>Spot hidden risks</h4><p>Auto-renewal traps, uncapped liability and steep fees</p></div>
+                </div>
+                <div class="do-item">
+                  <span class="do-ico" style="color:var(--teal)" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/></svg>
+                  </span>
+                  <div><h4>Plain-English translation</h4><p>Legal jargon explained in simple words</p></div>
+                </div>
+                <div class="do-item">
+                  <span class="do-ico" style="color:var(--pink)" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M9 12l2 2 4-4.5"/></svg>
+                  </span>
+                  <div><h4>Verify every alert</h4><p>Each risk links to the exact clause</p></div>
+                </div>
+              </div>
+              <button class="btn-primary btn-block" id="uploadBtn">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                Upload contract
+              </button>
+            </div>
+          </div>
+
+          <section id="reviews" aria-label="Your reviewed contracts">
+            <h2 class="section-title">Your Reviewed Contracts</h2>
+            <p class="section-sub">Every review is saved here. Open one to see the flagged clauses next to the original text.</p>
+            <div class="cards" id="cardsGrid"></div>
+          </section>
+        </div>
+
+        <!-- ========== WORKSPACE VIEW ========== -->
+        <section id="workspace" class="workspace" aria-label="Review workspace" hidden>
+          <div class="ws-head">
+            <button class="btn-back" id="backBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+              Back to dashboard
+            </button>
+            <h2 class="ws-title" id="wsTitle">Review</h2>
+            <div class="toggle" role="group" aria-label="Document view">
+              <button id="viewOriginal" class="on" aria-pressed="true">Original</button>
+              <button id="viewPlain" aria-pressed="false">Plain English</button>
+            </div>
+          </div>
+          <div class="ws-meta" id="wsMeta"></div>
+          <div class="split">
+            <div class="pane-col">
+              <p class="pane-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+                Contract text
+              </p>
+              <article class="pane-doc" id="docPane" aria-label="Contract text with highlighted clauses" tabindex="0"></article>
+            </div>
+            <div class="pane-col">
+              <p class="pane-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+                Risk alerts
+              </p>
+              <div class="pane-risks" id="risksPane"></div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+    <footer class="disclaimer-bar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v5M12 8h.01"/></svg>
+      <span><strong>Not legal advice.</strong> Clause Guard AI flags risks to help you ask better questions. It does not provide legal advice and is not a substitute for a qualified lawyer.</span>
+    </footer>
+  </div>
+</div>
+
+<!-- ================= REVIEW PANEL (MODAL) ================= -->
+<div class="overlay" id="reviewModal">
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="rmTitle">
+    <div class="dlg-head">
+      <div>
+        <h2 id="rmTitle">Review a contract</h2>
+        <p class="dlg-sub">Paste the text or upload a file. We check it against your policy rules and link every risk to the exact clause it came from.</p>
+      </div>
+      <button class="icon-btn" data-close aria-label="Close review panel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <label class="fld-label" for="contractText">Contract text</label>
+    <textarea id="contractText" placeholder="Paste your contract text here..." spellcheck="false"></textarea>
+    <div class="counter-row">
+      <span class="counter" id="counter">0 / 60,000 characters</span>
+      <button class="mini-link" id="clearBtn">Clear text</button>
+    </div>
+
+    <label class="dropzone" for="fileInput">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+      <span>
+        <span class="dz-t" id="dzTitle">Upload .pdf or .txt</span>
+        <span class="dz-s" id="dzSub" style="display:block">We extract the text on your device. Max 60,000 characters.</span>
+      </span>
+      <input type="file" id="fileInput" accept=".pdf,.txt" class="sr-only" aria-label="Upload a contract file">
+    </label>
+
+    <details class="policy" id="policyDetails">
+      <summary>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        Edit your policy rules
+      </summary>
+      <div class="policy-body">
+        <textarea id="policyText" aria-label="Policy rules" spellcheck="false"></textarea>
+      </div>
+    </details>
+
+    <div class="actions">
+      <button class="btn-ghost" id="sampleBtn">Try the sample contract</button>
+      <button class="btn-primary" id="analyzeBtn">Review contract</button>
+    </div>
+    <p class="status-line" id="statusLine" role="status" aria-live="polite"></p>
+  </div>
+</div>
+
+<!-- ================= HELP (MODAL) ================= -->
+<div class="overlay" id="helpModal">
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="dlg-head">
+      <div>
+        <h2 id="helpTitle">How it works</h2>
+        <p class="dlg-sub">Clause Guard AI helps you read contracts with confidence, in four steps.</p>
+      </div>
+      <button class="icon-btn" data-close aria-label="Close help panel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="help-steps">
+      <div class="help-step"><span class="help-num">1</span><div><h4>Paste or upload</h4><p>Drop in any agreement as text, a .txt file or a .pdf (up to 60,000 characters). PDF text is extracted in your browser.</p></div></div>
+      <div class="help-step"><span class="help-num">2</span><div><h4>We check it against your policy</h4><p>Open “Edit your policy rules” in the review panel to adjust the standards we check — renewal terms, liability caps, late fees and more.</p></div></div>
+      <div class="help-step"><span class="help-num">3</span><div><h4>Read the alerts</h4><p>Risks are sorted high, then medium, then passed checks — each with a plain summary and the rule it was checked against.</p></div></div>
+      <div class="help-step"><span class="help-num">4</span><div><h4>Verify every alert</h4><p>Click any alert to jump to the exact clause it came from in the original text. Toggle “Plain English” to see a simple explanation under each highlight.</p></div></div>
+    </div>
+    <div class="disclaimer-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+      <span>Clause Guard AI flags risks to help you ask better questions. It does not provide legal advice and is not a substitute for a qualified lawyer.</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   DATA — icons, default policy, sample contract, demo decks
+   ========================================================= */
+const ICONS = {
+  doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/></svg>',
+  shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.5 9.6-8 11-4.5-1.4-8-6-8-11V5z"/><path d="M9 11.6l2.1 2.1 4-4.4"/></svg>',
+  briefcase: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></svg>'
+};
+
+const DEFAULT_POLICY = `CLAUSE GUARD STANDARD POLICY — v1.2
+
+1. AUTO-RENEWAL. Renewal must require the customer's explicit consent. Automatic renewal longer than 12 months, or a cancellation-notice window longer than 30 days, is a HIGH risk.
+
+2. LIABILITY. Each party's total liability must be capped (for example, at the fees paid in the last 12 months). Unlimited or uncapped liability is a HIGH risk.
+
+3. LATE FEES. Late fees above 5% of the amount due, or interest above 2% per month, are excessive and a MEDIUM or HIGH risk.
+
+4. TERMINATION. Termination rights must be broadly mutual. One-sided termination for convenience is a HIGH risk.
+
+5. INDEMNITY. Indemnification must be mutual, limited to third-party claims, and must never cover the other party's own negligence. Broad one-sided indemnity is a HIGH risk.
+
+6. JURISDICTION. Governing law and venue should be where the customer lives or where the property is located. Distant or foreign venues are a MEDIUM risk.
+
+7. FAIR TERMS. Prompt deposit refunds, clear deletion rights and stated security practices are positive signs and should be reported as passed checks.`;
+
+const SAMPLE_CONTRACT = `RESIDENTIAL LEASE AGREEMENT
+
+This Residential Lease Agreement (the "Agreement") is entered into between Larkspur Property Management LLC (the "Landlord") and the undersigned tenant (the "Tenant") for the premises at 48 Willow Lane, Apartment 3B.
+
+1. TERM AND RENEWAL. The initial term of this Lease is twelve (12) months. Unless the Tenant delivers written notice of non-renewal at least ninety (90) days before the end of the current term, this Lease shall renew automatically for successive twelve (12) month terms on the same conditions, and the Landlord may increase the rent by up to ten percent (10%) upon each renewal.
+
+2. RENT AND LATE FEES. Monthly rent of $1,850 is due on the first day of each month. Any payment received after the third day of the month shall incur a late fee equal to fifteen percent (15%) of the monthly rent, plus interest at two percent (2%) per month, compounded monthly, until paid in full.
+
+3. SECURITY DEPOSIT. The Tenant shall pay a security deposit equal to one month's rent. The deposit will be returned within thirty (30) days of move-out, less documented costs of repair beyond normal wear and tear, with an itemized statement.
+
+4. TERMINATION. The Landlord may terminate this Agreement at any time, for any reason, upon thirty (30) days' written notice. The Tenant may terminate only at the end of the initial term or a renewal term, and only by giving ninety (90) days' written notice.
+
+5. LIABILITY. The Tenant shall be fully liable for any and all damages, losses, or injuries occurring in or around the premises, without any limitation or cap, including damages caused by guests, and including damages arising from conditions of the building.
+
+6. INDEMNIFICATION. The Tenant agrees to indemnify, defend, and hold harmless the Landlord from and against any and all claims, demands, losses, costs, and expenses, including reasonable attorneys' fees, arising out of or related to the Tenant's occupancy, including claims arising in whole or in part from the negligence of the Landlord.
+
+7. GOVERNING LAW AND VENUE. This Agreement shall be governed by the laws of the State of Delaware, and any dispute shall be brought exclusively in the state or federal courts located in Wilmington, Delaware, regardless of where the premises or the Tenant are located.
+
+8. QUIET ENJOYMENT. The Landlord covenants that the Tenant shall peacefully and quietly hold and enjoy the premises for the full term, subject to the terms of this Agreement.
+
+IN WITNESS WHEREOF, the parties have executed this Agreement as of the date last signed below.`;
+
+const SAMPLE_ANALYSIS = {
+  title: "Renters agreement",
+  risks: [
+    { level: "high", title: "Automatic renewal with a 90-day notice trap", section: "Section 1 · Term and Renewal",
+      quote: "this Lease shall renew automatically for successive twelve (12) month terms on the same conditions",
+      found: "The lease renews itself for another full 12 months unless you give written notice at least 90 days before the term ends, and rent can rise 10% at each renewal.",
+      rule: "Policy 1 — renewal must need explicit consent; notice windows over 30 days are a trap.",
+      plain: "If you do nothing, you are locked in for another whole year. You have to warn the landlord in writing three months before the lease ends, and your rent can still go up by 10%." },
+    { level: "high", title: "Steep late fee with compounding interest", section: "Section 2 · Rent and Late Fees",
+      quote: "a late fee equal to fifteen percent (15%) of the monthly rent, plus interest at two percent (2%) per month, compounded monthly",
+      found: "Paying more than three days late costs 15% of a month's rent (about $278), plus 2% interest every month, compounding.",
+      rule: "Policy 3 — late fees above 5% of the amount due, or interest above 2% per month, are excessive.",
+      plain: "Being three days late on $1,850 rent costs about $278 straight away, and the debt keeps growing by roughly 2% every month on top." },
+    { level: "high", title: "One-sided termination rights", section: "Section 4 · Termination",
+      quote: "The Landlord may terminate this Agreement at any time, for any reason, upon thirty (30) days' written notice.",
+      found: "The landlord can end the lease at any time with 30 days' notice, but you can only leave at the end of a term and must give 90 days' notice.",
+      rule: "Policy 4 — termination rights must be broadly mutual.",
+      plain: "The landlord can ask you to leave with a month's notice for any reason at all — but you do not have the same freedom to leave." },
+    { level: "high", title: "Uncapped tenant liability", section: "Section 5 · Liability",
+      quote: "without any limitation or cap, including damages caused by guests, and including damages arising from conditions of the building",
+      found: "You accept unlimited liability for anything that happens in or around the premises — even damage caused by the condition of the building itself.",
+      rule: "Policy 2 — liability should be capped and should never cover the other party's own responsibilities.",
+      plain: "There is no upper limit on what you could have to pay, and it even covers problems with the building that are the landlord's job to fix." },
+    { level: "medium", title: "Broad one-sided indemnity", section: "Section 6 · Indemnification",
+      quote: "including claims arising in whole or in part from the negligence of the Landlord",
+      found: "You must pay the landlord's legal costs for any claim 'arising out of or related to' your occupancy — even claims caused by the landlord's own negligence.",
+      rule: "Policy 5 — indemnity should be mutual and must never cover the other party's own negligence.",
+      plain: "You could end up paying the landlord's lawyers even when the landlord was the one who did something wrong." },
+    { level: "medium", title: "Distant court venue", section: "Section 7 · Governing Law and Venue",
+      quote: "any dispute shall be brought exclusively in the state or federal courts located in Wilmington, Delaware",
+      found: "All disputes must be handled in Wilmington, Delaware courts, no matter where the property is or where you live.",
+      rule: "Policy 6 — venue should be where the customer lives or the property is located.",
+      plain: "If there is a disagreement, you would have to travel to Delaware and deal with it in the courts there." },
+    { level: "ok", title: "Security deposit terms look fair", section: "Section 3 · Security Deposit",
+      quote: "returned within thirty (30) days of move-out, less documented costs of repair beyond normal wear and tear",
+      found: "The deposit comes back within 30 days with an itemized statement of deductions — a standard, balanced term.",
+      rule: "Policy 7 — prompt, itemized deposit refunds are a positive sign.",
+      plain: "Your deposit rules look normal and fair: you get it back within a month, minus clearly explained repair costs." }
+  ]
+};
+
+const DEMO_PRIVACY = {
+  title: "Privacy Policy",
+  text: `PRIVACY POLICY — NIMBUS NOTES
+
+1. DATA WE COLLECT. We collect your name, email address, and usage data when you create an account.
+
+2. SHARING. We may share your personal data with advertising partners and third-party marketers for promotional purposes, and this sharing is deemed accepted by continued use of the service.
+
+3. RETENTION AND DELETION. You may delete your account at any time from Settings. When you do, we permanently delete your personal data within thirty (30) days, except where the law requires us to keep it.
+
+4. SECURITY. We encrypt your data in transit and at rest using industry-standard encryption.
+
+Questions? Contact privacy@nimbusnotes.example.`,
+  risks: [
+    { level: "medium", title: "Silent consent to marketing data sharing", section: "Section 2 · Sharing",
+      quote: "this sharing is deemed accepted by continued use of the service",
+      found: "Your data can be shared with advertisers and marketers, and simply continuing to use the app counts as consent — there is no opt-in or opt-out.",
+      rule: "Policy 5 (applied) — consent for data sharing should be explicit, not assumed from continued use.",
+      plain: "Just by using the app you are treated as saying yes to your data being shared with advertisers. You never get asked." },
+    { level: "ok", title: "Clear right to deletion", section: "Section 3 · Retention and Deletion",
+      quote: "we permanently delete your personal data within thirty (30) days",
+      found: "Account deletion is self-serve and your data is permanently deleted within 30 days.",
+      rule: "Policy 7 — clear deletion rights are a positive sign.",
+      plain: "You can delete your account yourself, and your data is really gone within a month." },
+    { level: "ok", title: "Encryption is stated", section: "Section 4 · Security",
+      quote: "We encrypt your data in transit and at rest using industry-standard encryption",
+      found: "Data is encrypted both while moving and while stored.",
+      rule: "Policy 7 — stated security practices are a positive sign.",
+      plain: "Your data is scrambled for safety, both when it travels and when it is stored." }
+  ]
+};
+
+const DEMO_COMPANY = {
+  title: "Company policy",
+  text: `COMPANY EXPENSE POLICY
+
+1. REIMBURSEMENT. Reasonable business expenses are reimbursed within fourteen (14) days of approval, directly to the employee's bank account.
+
+2. NOTICE. The company will give employees at least sixty (60) days' written notice before changing this policy, and changes never apply retroactively.
+
+3. DISPUTES. Any disagreement about expenses may be raised with the local HR office where the employee works, and either side may suggest mediation.
+
+Effective January 2026.`,
+  risks: [
+    { level: "ok", title: "Fast reimbursement", section: "Section 1 · Reimbursement",
+      quote: "reimbursed within fourteen (14) days of approval",
+      found: "Expenses are paid back within 14 days of approval, straight to your bank account.",
+      rule: "Policy 7 — prompt reimbursement is a positive sign.",
+      plain: "You get your money back within two weeks of approval." },
+    { level: "ok", title: "Fair notice of changes", section: "Section 2 · Notice",
+      quote: "at least sixty (60) days' written notice before changing this policy",
+      found: "You get 60 days' written notice of any change, and changes never apply backwards.",
+      rule: "Policy 4 (applied) — notice of changes should be generous and never retroactive.",
+      plain: "If the rules change, you hear about it two months early, and the new rules cannot be used against past expenses." },
+    { level: "ok", title: "Local, balanced dispute path", section: "Section 3 · Disputes",
+      quote: "either side may suggest mediation",
+      found: "Disputes go to your local HR office and either side can suggest mediation — no distant venue, no forced arbitration.",
+      rule: "Policy 6 — disputes should be handled where the customer or employee is located.",
+      plain: "Any disagreement is handled near where you work, and either side can ask for a neutral mediator." }
+  ]
+};
+
+const PRELOAD = [
+  { review: { title: SAMPLE_ANALYSIS.title, text: SAMPLE_CONTRACT, risks: SAMPLE_ANALYSIS.risks, date: "Reviewed 21 Nov 2026" },
+    color: "var(--orange)", icon: "doc" },
+  { review: { title: DEMO_PRIVACY.title, text: DEMO_PRIVACY.text, risks: DEMO_PRIVACY.risks, date: "Reviewed 18 Nov 2026" },
+    color: "var(--sky)", icon: "shield" },
+  { review: { title: DEMO_COMPANY.title, text: DEMO_COMPANY.text, risks: DEMO_COMPANY.risks, date: "Reviewed 12 Nov 2026" },
+    color: "var(--slate)", icon: "briefcase" }
+];
+
+/* =========================================================
+   APP LOGIC
+   ========================================================= */
+const $ = (s, el) => (el || document).querySelector(s);
+const $$ = (s, el) => [...(el || document).querySelectorAll(s)];
+/* Set window.CLAUSE_GUARD_API_BASE or localStorage.getItem('clauseguard.api_base') to use a separate backend origin. */
+const API_BASE = (window.CLAUSE_GUARD_API_BASE || (typeof localStorage !== "undefined" && localStorage.getItem("clauseguard.api_base")) || "").replace(/\/+$/, "");
+const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const smooth = () => (REDUCED ? "auto" : "smooth");
+const MAX_CHARS = 60000;
+const LS_KEY = "clauseguard.reviews.v1";
+const NEW_COLORS = ["var(--teal)", "var(--purple)", "var(--pink)"];
+const NEW_ICONS = ["doc", "shield", "briefcase"];
+
+const scroller = $("#scroller"), dashboard = $("#dashboard"), workspace = $("#workspace");
+const cardsGrid = $("#cardsGrid"), savedBadge = $("#savedBadge");
+const reviewModal = $("#reviewModal"), helpModal = $("#helpModal");
+const contractText = $("#contractText"), policyText = $("#policyText"), policyDetails = $("#policyDetails");
+const counter = $("#counter"), statusLine = $("#statusLine"), analyzeBtn = $("#analyzeBtn");
+const fileInput = $("#fileInput"), dzTitle = $("#dzTitle"), dzSub = $("#dzSub");
+const wsTitle = $("#wsTitle"), wsMeta = $("#wsMeta"), docPane = $("#docPane"), risksPane = $("#risksPane");
+const viewOriginal = $("#viewOriginal"), viewPlain = $("#viewPlain");
+
+/* ---------- helpers ---------- */
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function normLevel(lv) { lv = String(lv || "").toLowerCase(); return lv === "high" || lv === "ok" ? lv : "medium"; }
+function fmtDate(d) {
+  const m = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return "Reviewed " + d.getDate() + " " + m[d.getMonth()] + " " + d.getFullYear();
+}
+function countsOf(risks) {
+  const c = { high: 0, medium: 0, ok: 0 };
+  risks.forEach(r => c[normLevel(r.level)]++);
+  return c;
+}
+
+/* ---------- persistence (localStorage, fail-safe) ---------- */
+function loadSaved() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return [];
+    const v = JSON.parse(raw);
+    return Array.isArray(v) ? v : [];
+  } catch (e) { return []; }
+}
+function persist() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(saved));
+  } catch (e) {
+    if (saved.length > 5) {
+      saved = saved.slice(0, 15);
+      try { localStorage.setItem(LS_KEY, JSON.stringify(saved)); } catch {}
+    }
+  }
+}
+let saved = loadSaved();
+
+/* ---------- cards grid ---------- */
+function cardStatus(risks) {
+  const c = countsOf(risks);
+  if (c.high > 0)   return { label: "High risk",   dot: "var(--pink)" };
+  if (c.medium > 0) return { label: "Medium risk", dot: "var(--orange)" };
+  return { label: "Looks clean", dot: "var(--teal)" };
+}
+function summaryLines(risks) {
+  const c = countsOf(risks);
+  const parts = [];
+  if (c.high) parts.push(c.high + " high");
+  if (c.medium) parts.push(c.medium + " medium");
+  if (c.ok) parts.push(c.ok + " passed");
+  return { l1: parts.join(", ") || "No checks returned", l2: risks.length + " check" + (risks.length === 1 ? "" : "s") + " against your policy" };
+}
+function renderCards() {
+  const all = [
+    ...saved.map((r, i) => ({ review: r, color: r.color || NEW_COLORS[i % 3], icon: r.icon || NEW_ICONS[i % 3] })),
+    ...PRELOAD
+  ];
+  cardsGrid.innerHTML = all.map((c, i) => {
+    const st = cardStatus(c.review.risks), sm = summaryLines(c.review.risks);
+    return '<button class="doc-card" data-i="' + i + '" style="animation-delay:' + Math.min(i * 60, 360) + 'ms" aria-label="Open review: ' + escapeHtml(c.review.title) + '">' +
+      '<span class="doc-ico" style="background:' + c.color + '">' + (ICONS[c.icon] || ICONS.doc) + '</span>' +
+      '<span class="t">' + escapeHtml(c.review.title) + '</span>' +
+      '<span class="sum">' + escapeHtml(sm.l1) + '<br>' + escapeHtml(sm.l2) + '</span>' +
+      '<span class="doc-foot" style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;width:100%">' +
+        '<span class="status"><span class="dot" style="background:' + st.dot + '"></span>' + escapeHtml(st.label) + '</span>' +
+        '<span class="date">' + escapeHtml(c.review.date) + '</span>' +
+      '</span></button>';
+  }).join("");
+  savedBadge.textContent = all.length;
+}
+cardsGrid.addEventListener("click", e => {
+  const card = e.target.closest(".doc-card");
+  if (!card) return;
+  const i = +card.dataset.i;
+  const review = i < saved.length ? saved[i] : PRELOAD[i - saved.length].review;
+  openReview(review);
+});
+
+/* ---------- quote matching (whitespace-tolerant) ---------- */
+const RX_SPECIAL = /[.*+?^${}()|[\]\\]/g;
+function quoteRegex(q) {
+  const words = String(q).trim().split(/\s+/).filter(Boolean).slice(0, 25).map(w => w.replace(RX_SPECIAL, "\\$&"));
+  if (!words.length) return null;
+  return new RegExp(words.join("\\s+"), "i");
+}
+function locateQuotes(text, risks) {
+  const accepted = [];
+  risks.forEach((r, i) => {
+    r._start = -1; r._end = -1;
+    const q = String(r.quote || "");
+    if (!q.trim()) return;
+    let m = null;
+    const re1 = quoteRegex(q);
+    if (re1) m = re1.exec(text);
+    if (!m) { // fallback: first 80 characters of the quote
+      const re2 = quoteRegex(q.slice(0, 80));
+      if (re2) m = re2.exec(text);
+    }
+    if (m) {
+      const s = m.index, e = s + m[0].length;
+      if (!accepted.some(a => s < a.end && e > a.start)) { // drop overlaps with earlier matches
+        accepted.push({ start: s, end: e, i });
+        r._start = s; r._end = e;
+      }
+    }
+  });
+  return accepted.sort((a, b) => a.start - b.start);
+}
+
+/* ---------- workspace rendering ---------- */
+let wsRisks = [];
+function renderDoc(text, risks, ranges) {
+  let html = "", pos = 0;
+  for (const rg of ranges) {
+    html += escapeHtml(text.slice(pos, rg.start));
+    const lv = normLevel(risks[rg.i].level);
+    html += '<mark class="lv-' + lv + '" data-idx="' + rg.i + '" tabindex="0" role="button" aria-label="Go to alert: ' +
+      escapeHtml(risks[rg.i].title) + '">' + escapeHtml(text.slice(rg.start, rg.end)) + "</mark>";
+    if (risks[rg.i].plain) {
+      html += '<span class="plain-note" data-note="' + rg.i + '"><strong>Plain English:</strong> ' + escapeHtml(risks[rg.i].plain) + "</span>";
+    }
+    pos = rg.end;
+  }
+  html += escapeHtml(text.slice(pos));
+  return html;
+}
+function renderRisks(risks) {
+  const order = { high: 0, medium: 1, ok: 2 };
+  const sortedIdx = risks.map((_, i) => i).sort((a, b) => order[normLevel(risks[a].level)] - order[normLevel(risks[b].level)]);
+  const LV_COLOR = { high: "var(--pink)", medium: "var(--orange)", ok: "var(--teal)" };
+  const LV_PILL = { high: "p-high", medium: "p-medium", ok: "p-ok" };
+  const LV_NAME = { high: "High", medium: "Medium", ok: "Passed" };
+  risksPane.innerHTML = sortedIdx.map(i => {
+    const r = risks[i], lv = normLevel(r.level);
+    return '<button class="risk-card" data-idx="' + i + '" style="--lv:' + LV_COLOR[lv] + '" aria-label="Alert: ' + escapeHtml(r.title) + '">' +
+      '<span class="rc-top" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
+        '<span class="pill ' + LV_PILL[lv] + '"><span class="cdot"></span>' + LV_NAME[lv] + '</span>' +
+        (r.section ? '<span class="risk-sec">' + escapeHtml(r.section) + '</span>' : '') +
+        (r._start < 0 ? '<span class="tag-nl">(text not located)</span>' : '') +
+      '</span>' +
+      '<span class="rc-title">' + escapeHtml(r.title) + '</span>' +
+      (r.found ? '<span class="risk-found">' + escapeHtml(r.found) + '</span>' : '') +
+      (r.quote ? '<span class="risk-quote">&ldquo;' + escapeHtml(r.quote) + '&rdquo;</span>' : '') +
+      (r.rule ? '<span class="risk-rule"><strong>Policy rule:</strong> ' + escapeHtml(r.rule) + '</span>' : '') +
+    '</button>';
+  }).join("");
+}
+function renderMeta(risks) {
+  const c = countsOf(risks);
+  let html = "";
+  if (c.high) html += '<span class="pill p-high"><span class="cdot"></span>' + c.high + ' high</span>';
+  if (c.medium) html += '<span class="pill p-medium"><span class="cdot"></span>' + c.medium + ' medium</span>';
+  if (c.ok) html += '<span class="pill p-ok"><span class="cdot"></span>' + c.ok + ' passed</span>';
+  html += '<span class="ws-hint">Click an alert to jump to its exact clause.</span>';
+  wsMeta.innerHTML = html;
+}
+function activate(idx, opts) {
+  opts = opts || {};
+  $$("mark", docPane).forEach(m => m.classList.toggle("active", +m.dataset.idx === idx));
+  $$(".risk-card", risksPane).forEach(c => c.classList.toggle("active", +c.dataset.idx === idx));
+  if (opts.scrollDoc !== false) {
+    const m = $('mark[data-idx="' + idx + '"]', docPane);
+    if (m) m.scrollIntoView({ behavior: smooth(), block: "center" });
+  }
+  if (opts.scrollCard) {
+    const c = $('.risk-card[data-idx="' + idx + '"]', risksPane);
+    if (c) c.scrollIntoView({ behavior: smooth(), block: "nearest" });
+  }
+}
+function openReview(review) {
+  wsTitle.textContent = review.title;
+  wsRisks = review.risks.map(r => Object.assign({}, r));
+  const ranges = locateQuotes(review.text, wsRisks);
+  docPane.innerHTML = renderDoc(review.text, wsRisks, ranges);
+  renderRisks(wsRisks);
+  renderMeta(wsRisks);
+  setView("original");
+  docPane.scrollTop = 0; risksPane.scrollTop = 0;
+  dashboard.hidden = true;
+  workspace.hidden = false;
+  scroller.scrollTo({ top: 0, behavior: smooth() });
+}
+function showDashboard() {
+  workspace.hidden = true;
+  dashboard.hidden = false;
+  scroller.scrollTo({ top: 0, behavior: smooth() });
+}
+docPane.addEventListener("click", e => {
+  const m = e.target.closest("mark");
+  if (m) activate(+m.dataset.idx, { scrollDoc: false, scrollCard: true });
+});
+docPane.addEventListener("keydown", e => {
+  const m = e.target.closest("mark");
+  if (m && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); activate(+m.dataset.idx, { scrollDoc: false, scrollCard: true }); }
+});
+risksPane.addEventListener("click", e => {
+  const card = e.target.closest(".risk-card");
+  if (!card) return;
+  const idx = +card.dataset.idx;
+  const located = wsRisks[idx] && wsRisks[idx]._start >= 0;
+  activate(idx, { scrollCard: false });
+  if (!located) { card.classList.remove("shake"); void card.offsetWidth; card.classList.add("shake"); }
+});
+$("#backBtn").addEventListener("click", showDashboard);
+
+/* ---------- Original / Plain English toggle ---------- */
+function setView(v) {
+  const plain = v === "plain";
+  docPane.classList.toggle("plain", plain);
+  viewOriginal.classList.toggle("on", !plain);
+  viewPlain.classList.toggle("on", plain);
+  viewOriginal.setAttribute("aria-pressed", String(!plain));
+  viewPlain.setAttribute("aria-pressed", String(plain));
+}
+viewOriginal.addEventListener("click", () => setView("original"));
+viewPlain.addEventListener("click", () => setView("plain"));
+
+/* ---------- modals (focus trapped, Escape to close) ---------- */
+let lastFocus = null, openOv = null;
+function focusables(ov) {
+  return $$('a[href], button:not([disabled]), textarea, input, select, summary, [tabindex]:not([tabindex="-1"])', ov)
+    .filter(el => !el.disabled && el.getClientRects().length > 0);
+}
+function openOverlay(ov) {
+  lastFocus = document.activeElement;
+  openOv = ov;
+  ov.classList.add("open");
+  document.body.style.overflow = "hidden";
+  const f = focusables(ov);
+  if (f[0]) f[0].focus();
+}
+function closeOverlay(ov) {
+  ov.classList.remove("open");
+  if (openOv === ov) openOv = null;
+  document.body.style.overflow = "";
+  if (lastFocus && lastFocus.focus) lastFocus.focus();
+}
+document.addEventListener("keydown", e => {
+  if (!openOv) return;
+  if (e.key === "Escape") { closeOverlay(openOv); return; }
+  if (e.key === "Tab") {
+    const f = focusables(openOv);
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+});
+[reviewModal, helpModal].forEach(ov => {
+  ov.addEventListener("click", e => {
+    if (e.target === ov) closeOverlay(ov);
+    else if (e.target.closest("[data-close]")) closeOverlay(ov);
+  });
+});
+function openReviewPanel(expandPolicy) {
+  if (expandPolicy) policyDetails.open = true;
+  openOverlay(reviewModal);
+  if (expandPolicy) setTimeout(() => policyText.focus(), REDUCED ? 0 : 220);
+}
+$("#bannerBtn").addEventListener("click", () => openReviewPanel(false));
+$("#uploadBtn").addEventListener("click", () => openReviewPanel(false));
+
+/* ---------- nav behavior ---------- */
+const navItems = $$(".nav-item");
+function setActiveNav(key) {
+  navItems.forEach(b => {
+    const on = b.dataset.nav === key;
+    b.classList.toggle("active", on);
+    if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+  });
+}
+navItems.forEach(btn => btn.addEventListener("click", () => {
+  const k = btn.dataset.nav;
+  if (k === "home" || k === "review") { showDashboard(); setActiveNav(k); }
+  else if (k === "policy") { openReviewPanel(true); }
+  else if (k === "saved") {
+    showDashboard();
+    setTimeout(() => $("#reviews").scrollIntoView({ behavior: smooth(), block: "start" }), REDUCED ? 0 : 60);
+  }
+  else if (k === "help") { openOverlay(helpModal); }
+}));
+$("#brandHome").addEventListener("click", () => { showDashboard(); setActiveNav("review"); });
+$("#viewAllLink").addEventListener("click", () => $("#reviews").scrollIntoView({ behavior: smooth(), block: "start" }));
+
+/* ---------- review panel: counter, status, sample ---------- */
+function updateCounter() {
+  const n = contractText.value.length;
+  counter.textContent = n.toLocaleString("en-US") + " / 60,000 characters";
+  counter.classList.toggle("over", n > MAX_CHARS);
+}
+function setStatus(msg, type) {
+  statusLine.textContent = msg || "";
+  statusLine.className = "status-line " + (type || "info");
+}
+contractText.addEventListener("input", updateCounter);
+$("#clearBtn").addEventListener("click", () => { contractText.value = ""; updateCounter(); setStatus("", "info"); contractText.focus(); });
+$("#sampleBtn").addEventListener("click", () => {
+  contractText.value = SAMPLE_CONTRACT;
+  updateCounter();
+  setStatus('Sample contract loaded. Press "Review contract" to analyze it.', "ok");
+  contractText.focus();
+});
+
+/* ---------- file upload (.txt / .pdf, pdf.js on demand) ---------- */
+let pdfLoading = null;
+function loadPdfJs() {
+  if (window.pdfjsLib) return Promise.resolve();
+  if (pdfLoading) return pdfLoading;
+  pdfLoading = new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    s.onload = () => {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+      resolve();
+    };
+    s.onerror = () => {
+      pdfLoading = null;
+      reject(new Error("pdfjs-load-failed"));
+    };
+    document.head.appendChild(s);
+  });
+  return pdfLoading;
+}
+async function extractPdf(file) {
+  await loadPdfJs();
+  const buf = await file.arrayBuffer();
+  const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+  const pages = [];
+  const maxPages = Math.min(pdf.numPages, 100);
+  let totalChars = 0;
+  for (let p = 1; p <= maxPages; p++) {
+    const page = await pdf.getPage(p);
+    const tc = await page.getTextContent();
+    const pageText = tc.items.map(it => it.str).join(" ");
+    pages.push(pageText);
+    totalChars += pageText.length;
+    if (totalChars > MAX_CHARS * 1.5) break;
+  }
+  return pages.join("\n\n");
+}
+fileInput.addEventListener("change", async () => {
+  const f = fileInput.files && fileInput.files[0];
+  if (!f) return;
+  const isTxt = /\.txt$/i.test(f.name), isPdf = /\.pdf$/i.test(f.name);
+  if (!isTxt && !isPdf) { setStatus("Please choose a .pdf or .txt file.", "error"); fileInput.value = ""; return; }
+  setStatus("Reading " + f.name + "…", "info");
+  try {
+    let text = "";
+    if (isTxt) text = await f.text();
+    else text = await extractPdf(f);
+    if (!text.trim()) {
+      setStatus(isPdf
+        ? "That PDF looks like a scanned image — no selectable text was found. Try a text-based PDF or paste the text instead."
+        : "That file looks empty. Try another file or paste the text instead.", "error");
+      fileInput.value = ""; return;
+    }
+    contractText.value = text;
+    updateCounter();
+    dzTitle.textContent = f.name;
+    dzSub.textContent = text.length.toLocaleString("en-US") + " characters loaded";
+    if (text.length > MAX_CHARS) {
+      setStatus("Loaded " + f.name + ", but it is " + text.length.toLocaleString("en-US") + " characters — over the 60,000 limit. Please trim it before reviewing.", "error");
+    } else {
+      setStatus("Loaded " + f.name + " (" + text.length.toLocaleString("en-US") + " characters). Ready to review.", "ok");
+    }
+  } catch (err) {
+    setStatus(isPdf
+      ? "We could not read that PDF. It may be corrupted or password-protected."
+      : "We could not read that file. Please try again or paste the text instead.", "error");
+  }
+  fileInput.value = "";
+});
+
+/* ---------- analysis (POST /api/analyze) ---------- */
+function apiErrorMessage(status, body) {
+  const fromServer = body && typeof body.error === "string" ? body.error : "";
+  if (fromServer) return fromServer;
+  switch (status) {
+    case 400: return "The server could not read that request (400). Please check the text and try again.";
+    case 405: return "The server rejected the request method (405).";
+    case 413: return "This contract is too long for the server (413). Please keep it under 60,000 characters.";
+    case 429: return "Rate limit reached (429). Please wait a minute and try again.";
+    case 500: return "The analysis server had a problem (500). Please try again in a moment.";
+    case 502: return "The analysis server is unavailable (502). Please try again in a moment.";
+    default: return "Unexpected server response (" + status + ").";
+  }
+}
+function setLoading(on) {
+  analyzeBtn.disabled = on;
+  analyzeBtn.innerHTML = on ? '<span class="spinner" aria-hidden="true"></span> Reviewing…' : "Review contract";
+}
+function sanitizeRisks(list) {
+  return list.map(r => ({
+    level: normLevel(r && r.level),
+    title: String((r && r.title) || "Untitled check"),
+    section: String((r && r.section) || ""),
+    quote: String((r && r.quote) || ""),
+    found: String((r && r.found) || ""),
+    rule: String((r && r.rule) || ""),
+    plain: String((r && r.plain) || "")
+  }));
+}
+function finishReview(data, text) {
+  const review = {
+    id: "r" + Date.now(),
+    title: String(data.title || "Untitled contract"),
+    text: text,
+    risks: sanitizeRisks(data.risks),
+    date: fmtDate(new Date()),
+    color: NEW_COLORS[saved.length % NEW_COLORS.length],
+    icon: NEW_ICONS[saved.length % NEW_ICONS.length]
+  };
+  saved.unshift(review);
+  persist();
+  renderCards();
+  contractText.value = ""; updateCounter();
+  dzTitle.textContent = "Upload .pdf or .txt";
+  dzSub.textContent = "We extract the text on your device. Max 60,000 characters.";
+  setStatus("", "info");
+  closeOverlay(reviewModal);
+  openReview(review);
+}
+analyzeBtn.addEventListener("click", async () => {
+  const text = contractText.value;
+  const policy = policyText.value.trim();
+  if (!text.trim()) { setStatus("Please paste your contract text or upload a file first.", "error"); contractText.focus(); return; }
+  if (text.length > MAX_CHARS) {
+    setStatus("This contract is " + (text.length - MAX_CHARS).toLocaleString("en-US") + " characters over the 60,000 limit. Please shorten it before reviewing.", "error");
+    return;
+  }
+  setLoading(true);
+  setStatus("Reviewing your contract… this can take up to a minute.", "info");
+  let data = null, errMsg = null, statusCode = 0, networkFail = false;
+  try {
+    const res = await fetch(API_BASE + "/api/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: text, policy: policy || undefined })
+    });
+    statusCode = res.status;
+    let body = null;
+    try { body = await res.json(); } catch (e) { /* not JSON */ }
+    if (!res.ok) errMsg = apiErrorMessage(res.status, body);
+    else if (!body || !Array.isArray(body.risks)) errMsg = "The server returned an unexpected response. Please try again.";
+    else data = body;
+  } catch (err) {
+    networkFail = true;
+    errMsg = "Could not reach the analysis server. Check your internet connection and that the backend is running, then try again.";
+  }
+  if (errMsg) {
+    const isSample = text.trim() === SAMPLE_CONTRACT.trim();
+    if (isSample && (networkFail || statusCode === 404 || statusCode === 405)) {
+      // Offline demo path: the live API needs your backend + API key. For the built-in
+      // sample contract we fall back to a bundled analysis so the workspace is demoable.
+      setStatus("The live analysis API is not reachable here, so this shows the built-in demo analysis of the sample contract.", "info");
+      setLoading(false);
+      setTimeout(() => finishReview({ title: SAMPLE_ANALYSIS.title, risks: SAMPLE_ANALYSIS.risks }, text), REDUCED ? 0 : 700);
+      return;
+    }
+    setLoading(false);
+    setStatus(errMsg, "error");
+    return;
+  }
+  setLoading(false);
+  finishReview(data, text);
+});
+
+/* ---------- init ---------- */
+policyText.value = DEFAULT_POLICY;
+updateCounter();
+renderCards();
+
+</script>
+</body>
+</html>

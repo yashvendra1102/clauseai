@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { fileURLToPath } from 'node:url';
 
 import { config } from './src/env.js';
 import { analyzeContract } from './src/analyzer.js';
@@ -244,9 +245,11 @@ function gracefulShutdown() {
 process.on('SIGINT', gracefulShutdown);
 process.on('SIGTERM', gracefulShutdown);
 
-server.listen(config.port, config.host, () => {
-  const url = `http://${config.host === '0.0.0.0' ? 'localhost' : config.host}:${config.port}`;
-  console.log(`Clause Guard backend listening on ${url}`);
-  console.log(`Analysis engine: ${activeEngine()}`);
-  console.log(`Serving dashboard from: ${config.publicDir}`);
-});
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  server.listen(config.port, config.host, () => {
+    const url = `http://${config.host === '0.0.0.0' ? 'localhost' : config.host}:${config.port}`;
+    console.log(`Clause Guard backend listening on ${url}`);
+    console.log(`Analysis engine: ${activeEngine()}`);
+    console.log(`Serving dashboard from: ${config.publicDir}`);
+  });
+}

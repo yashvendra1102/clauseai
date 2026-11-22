@@ -1,0 +1,9 @@
+{
+  "name": "clause-guard-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Frontend UI for Clause Guard AI contract-review dashboard",
+  "scripts": {
+    "start": "npx serve ."
+  }
+}
