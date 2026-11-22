@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "main": "index.js",
   "scripts": {
-    "dev": "npm run dev --prefix backend",
     "build": "echo 'Build ok'",
     "test": "npm test --prefix backend",
-    "start": "npm start --prefix backend"
+    "start": "node index.js"
   },
   "engines": {
     "node": ">=18"
